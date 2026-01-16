@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { db } from "../firebase";
+import { toast } from "react-toastify";
 
 const CLOUD_NAME = "dbb3d75pd";
 const UPLOAD_PRESET = "posts_upload";
@@ -17,35 +18,44 @@ function Profile() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Fetch profile data
+  /* ================= FETCH PROFILE ================= */
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
 
-      const ref = doc(db, "users", user.uid);
-      const snap = await getDoc(ref);
+      try {
+        const ref = doc(db, "users", user.uid);
+        const snap = await getDoc(ref);
 
-      if (snap.exists()) {
-        const data = snap.data();
-        setName(data.name || "");
-        setBranch(data.branch || "");
-        setYear(data.year || "");
-        setProfilePic(data.profilePic || "");
+        if (snap.exists()) {
+          const data = snap.data();
+          setName(data.name || "");
+          setBranch(data.branch || "");
+          setYear(data.year || "");
+          setProfilePic(data.profilePic || "");
+        }
+      } catch (err) {
+        toast.error("Failed to load profile ❌");
       }
     };
 
     fetchProfile();
   }, [user]);
 
-  // 🔹 Update profile
+  /* ================= UPDATE PROFILE ================= */
   const handleUpdate = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("You must be logged in");
+      return;
+    }
+
     setLoading(true);
+    const toastId = toast.loading("Updating profile...");
 
     try {
       let imageUrl = profilePic;
 
-      // Upload new profile image
+      // Upload new profile picture
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -67,16 +77,27 @@ function Profile() {
         profilePic: imageUrl
       });
 
-      alert("Profile updated successfully ✅");
+      toast.update(toastId, {
+        render: "Profile updated successfully ✅",
+        type: "success",
+        isLoading: false,
+        autoClose: 2500
+      });
 
     } catch (err) {
       console.error(err);
-      alert("Failed to update profile ❌");
+      toast.update(toastId, {
+        render: "Failed to update profile ❌",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000
+      });
     }
 
     setLoading(false);
   };
 
+  /* ================= UI ================= */
   return (
     <div className="container">
       <div className="card">
@@ -101,14 +122,14 @@ function Profile() {
           className="input"
           placeholder="Name"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
 
         <input
           className="input"
           placeholder="Branch"
           value={branch}
-          onChange={e => setBranch(e.target.value)}
+          onChange={(e) => setBranch(e.target.value)}
         />
 
         <input
@@ -116,10 +137,8 @@ function Profile() {
           type="number"
           placeholder="Year"
           value={year}
-          onChange={e => setYear(e.target.value)}
+          onChange={(e) => setYear(e.target.value)}
         />
-
-        
 
         <button onClick={handleUpdate} disabled={loading}>
           {loading ? "Updating..." : "Update Profile"}

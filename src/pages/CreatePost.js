@@ -17,7 +17,10 @@ function CreatePost() {
     e.preventDefault();
     if (!user) return toast.error("Login required");
 
+    if (!title.trim()) return toast.error("Title required");
+
     setLoading(true);
+    const toastId = toast.loading("Posting...");
 
     try {
       let fileUrl = "";
@@ -38,7 +41,7 @@ function CreatePost() {
           .getPublicUrl(fileName);
 
         fileUrl = data.publicUrl;
-        fileType = file.type;
+        fileType = file.type || "application/octet-stream";
       }
 
       await addDoc(collection(db, "posts"), {
@@ -54,10 +57,21 @@ function CreatePost() {
       setDescription("");
       setFile(null);
 
-      toast.success("Post created successfully 🎉");
+      toast.update(toastId, {
+        render: "Post created successfully ✅",
+        type: "success",
+        isLoading: false,
+        autoClose: 2500
+      });
+
     } catch (err) {
       console.error(err);
-      toast.error("Post failed to upload ❌");
+      toast.update(toastId, {
+        render: "Post failed ❌",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000
+      });
     }
 
     setLoading(false);
@@ -68,7 +82,7 @@ function CreatePost() {
       <div className="card">
         <h2>Create Post</h2>
 
-        <form onSubmit={handleSubmit} className="create-form">
+        <form onSubmit={handleSubmit}>
           <input
             className="crePost"
             placeholder="Title"
@@ -83,9 +97,10 @@ function CreatePost() {
             onChange={(e) => setDescription(e.target.value)}
           />
 
+          {/* 🔥 ALL FILE TYPES */}
           <input
             type="file"
-            accept="image/*,video/*,application/pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+            accept="*/*"
             onChange={(e) => setFile(e.target.files[0])}
           />
 

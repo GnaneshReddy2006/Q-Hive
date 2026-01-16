@@ -23,8 +23,8 @@ function Posts() {
   const [likes, setLikes] = useState({});
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState({});
+  const [textPreview, setTextPreview] = useState({});
 
-  // Filters
   const [branchFilter, setBranchFilter] = useState("All");
   const [yearFilter, setYearFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
@@ -34,107 +34,22 @@ function Posts() {
     return onAuthStateChanged(auth, setUser);
   }, []);
 
-  /* LIKES */
-  const fetchLikes = async () => {
-    const snap = await getDocs(collection(db, "likes"));
-    const count = {};
-    snap.forEach((d) => {
-      const { postId } = d.data();
-      count[postId] = (count[postId] || 0) + 1;
-    });
-    setLikes(count);
-  };
-
-  /* COMMENTS */
-  const fetchComments = async (postId) => {
-    const q = query(collection(db, "comments"), where("postId", "==", postId));
-    const snap = await getDocs(q);
-    setComments((p) => ({
-      ...p,
-      [postId]: snap.docs.map((d) => d.data()),
-    }));
-  };
-
-  /* POSTS */
-  const fetchAllPosts = useCallback(async () => {
-    const snap = await getDocs(collection(db, "posts"));
-    const postList = [];
-
-    for (const d of snap.docs) {
-      const post = { id: d.id, ...d.data() };
-
-      if (post.userId) {
-        const userSnap = await getDoc(doc(db, "users", post.userId));
-        const u = userSnap.exists() ? userSnap.data() : {};
-        post.userBranch = u.branch || "N/A";
-        post.userYear = u.year || "N/A";
-      }
-
-      postList.push(post);
-    }
-
-    postList.sort(
-      (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-    );
-
-    setPosts(postList);
-    setFilteredPosts(postList);
-
-    fetchLikes();
-    postList.forEach((p) => fetchComments(p.id));
-  }, []);
-
-  useEffect(() => {
-    fetchAllPosts();
-  }, [fetchAllPosts]);
-
-  /* FILTERS */
-  useEffect(() => {
-    let updated = [...posts];
-
-    if (branchFilter !== "All") {
-      updated = updated.filter((p) => p.userBranch === branchFilter);
-    }
-
-    if (yearFilter !== "All") {
-      updated = updated.filter((p) => String(p.userYear) === yearFilter);
-    }
-
-    if (searchText.trim() !== "") {
-      updated = updated.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          p.description.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-
-    setFilteredPosts(updated);
-  }, [branchFilter, yearFilter, searchText, posts]);
-
-  /* DELETE */
-  const deletePost = async (postId, fileUrl) => {
-    const ok = window.confirm("Delete this post?");
-    if (!ok) return;
-
+  /* LOAD TXT FILE */
+  const loadTextFile = async (postId, fileUrl) => {
     try {
-      if (fileUrl) {
-        const fileName = fileUrl.split("/").pop();
-        await supabase.storage.from("documents").remove([fileName]);
-      }
+      const res = await fetch(fileUrl);
+      const text = await res.text();
 
-      await deleteDoc(doc(db, "posts", postId));
-
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
-      setFilteredPosts((prev) => prev.filter((p) => p.id !== postId));
-
-      toast.success("Post deleted ✔️");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete post ❌");
+      setTextPreview((p) => ({
+        ...p,
+        [postId]: text
+      }));
+    } catch {
+      toast.error("Failed to load text file ❌");
     }
   };
 
-  /* LIKE */
+  /* LIKES */
   const toggleLike = async (postId) => {
     if (!user) return toast.error("Login required");
 
@@ -148,17 +63,20 @@ function Posts() {
 
     if (!snap.empty) {
       snap.forEach((d) => deleteDoc(doc(db, "likes", d.id)));
-      setLikes((p) => ({
-        ...p,
-        [postId]: Math.max((p[postId] || 1) - 1, 0),
-      }));
+      setLikes((p) => ({ ...p, [postId]: Math.max((p[postId] || 1) - 1, 0) }));
     } else {
       await addDoc(collection(db, "likes"), { postId, userId: user.uid });
       setLikes((p) => ({ ...p, [postId]: (p[postId] || 0) + 1 }));
     }
   };
 
-  /* COMMENT */
+  /* COMMENTS */
+  const fetchComments = async (postId) => {
+    const q = query(collection(db, "comments"), where("postId", "==", postId));
+    const snap = await getDocs(q);
+    setComments((p) => ({ ...p, [postId]: snap.docs.map(d => d.data()) }));
+  };
+
   const addComment = async (postId) => {
     if (!user || !newComment[postId]?.trim()) return;
 
@@ -166,20 +84,81 @@ function Posts() {
       postId,
       userId: user.uid,
       text: newComment[postId],
-      createdAt: serverTimestamp(),
+      createdAt: serverTimestamp()
     });
 
-    setNewComment((p) => ({ ...p, [postId]: "" }));
+    setNewComment(p => ({ ...p, [postId]: "" }));
     fetchComments(postId);
+  };
+
+  /* POSTS */
+  const fetchAllPosts = useCallback(async () => {
+    const snap = await getDocs(collection(db, "posts"));
+    const list = [];
+
+    for (const d of snap.docs) {
+      const post = { id: d.id, ...d.data() };
+
+      if (post.userId) {
+        const uSnap = await getDoc(doc(db, "users", post.userId));
+        const u = uSnap.exists() ? uSnap.data() : {};
+        post.userBranch = u.branch || "N/A";
+        post.userYear = u.year || "N/A";
+      }
+
+      list.push(post);
+    }
+
+    list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    setPosts(list);
+    setFilteredPosts(list);
+    list.forEach(p => fetchComments(p.id));
+  }, []);
+
+  useEffect(() => {
+    fetchAllPosts();
+  }, [fetchAllPosts]);
+
+  /* FILTER */
+  useEffect(() => {
+    let u = [...posts];
+    if (branchFilter !== "All") u = u.filter(p => p.userBranch === branchFilter);
+    if (yearFilter !== "All") u = u.filter(p => String(p.userYear) === yearFilter);
+    if (searchText) {
+      u = u.filter(p =>
+        p.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+    setFilteredPosts(u);
+  }, [branchFilter, yearFilter, searchText, posts]);
+
+  /* DELETE */
+  const deletePost = async (postId, fileUrl) => {
+    if (!window.confirm("Delete this post?")) return;
+
+    try {
+      if (fileUrl) {
+        const name = fileUrl.split("/").pop();
+        await supabase.storage.from("documents").remove([name]);
+      }
+
+      await deleteDoc(doc(db, "posts", postId));
+      setPosts(p => p.filter(x => x.id !== postId));
+      setFilteredPosts(p => p.filter(x => x.id !== postId));
+
+      toast.success("Post deleted ✔️");
+    } catch {
+      toast.error("Delete failed ❌");
+    }
   };
 
   return (
     <div className="posts-container">
       <h2>All Posts</h2>
 
-      {/* FILTER BAR */}
       <div className="filter-bar">
-        <select className="filter-select" value={branchFilter} onChange={(e) => setBranchFilter(e.target.value)}>
+        <select className="filter-select" value={branchFilter} onChange={e => setBranchFilter(e.target.value)}>
           <option value="All">All Branches</option>
           <option value="CSE">CSE</option>
           <option value="ECE">ECE</option>
@@ -190,7 +169,7 @@ function Posts() {
           <option value="CIVIL">CIVIL</option>
         </select>
 
-        <select className="filter-select" value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+        <select className="filter-select" value={yearFilter} onChange={e => setYearFilter(e.target.value)}>
           <option value="All">All Years</option>
           <option value="1">1st Year</option>
           <option value="2">2nd Year</option>
@@ -198,72 +177,44 @@ function Posts() {
           <option value="4">4th Year</option>
         </select>
 
-        <input
-          className="filter-input"
-          placeholder="Search…. (Title/Description)"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
+        <input className="filter-input" placeholder="Search..." value={searchText} onChange={e => setSearchText(e.target.value)} />
       </div>
 
-      {/* POSTS */}
-      {filteredPosts.map((post) => (
+      {filteredPosts.map(post => (
         <div className="post-card" key={post.id}>
           <h3>{post.title}</h3>
           <p>{post.description}</p>
           <p><strong>{post.userBranch}</strong> | Year {post.userYear}</p>
 
-          {post.fileType?.startsWith("image") && (
-            <img src={post.fileUrl} alt="post" />
-          )}
+          {post.fileType?.startsWith("image") && <img src={post.fileUrl} alt="" />}
+          {post.fileType?.startsWith("video") && <video src={post.fileUrl} controls />}
+          {post.fileType === "application/pdf" && <a href={post.fileUrl} target="_blank">📄 View PDF</a>}
 
-          {post.fileType?.startsWith("video") && (
-            <video
-              src={post.fileUrl}
-              controls
-              style={{ width: "100%", borderRadius: "10px", marginTop: "12px" }}
-            />
-          )}
-
-          {post.fileType === "application/pdf" && (
-            <div style={{ marginTop: "8px" }}>
-              <a href={post.fileUrl} target="_blank" rel="noreferrer">📄 View PDF</a><br />
-              <a href={post.fileUrl} download>⬇️ Download PDF</a>
-            </div>
+          {post.fileType === "text/plain" && (
+            <>
+              <button onClick={() => loadTextFile(post.id, post.fileUrl)}>📃 View Text</button> &nbsp;
+              <a href={post.fileUrl} download>⬇️ Download TXT</a>
+              {textPreview[post.id] && <pre>{textPreview[post.id]}</pre>}
+            </>
           )}
 
           {!post.fileType?.startsWith("image") &&
-            !post.fileType?.startsWith("video") &&
-            post.fileType !== "application/pdf" &&
-            post.fileUrl && (
-              <div style={{ marginTop: "8px" }}>
-                <a href={post.fileUrl} download>⬇️ Download File</a>
-              </div>
-            )}
+           !post.fileType?.startsWith("video") &&
+           post.fileType !== "application/pdf" &&
+           post.fileType !== "text/plain" &&
+           post.fileUrl && <a href={post.fileUrl} download>⬇️ Download File</a>}
 
-          <div style={{ marginTop: "12px", display: "flex", alignItems: "center" }}>
+          <div style={{ marginTop: 10 }}>
             <button onClick={() => toggleLike(post.id)}>❤️ {likes[post.id] || 0}</button>
-
-            {user && user.uid === post.userId && (
-              <button className="delete-btn" onClick={() => deletePost(post.id, post.fileUrl)}>
-                Delete
-              </button>
-            )}
+            {user?.uid === post.userId && <button className="delete-btn" onClick={() => deletePost(post.id, post.fileUrl)}>Delete</button>}
           </div>
 
           <div className="comment-box">
-            <input
-              className="comment-input"
-              placeholder="Comment…"
-              value={newComment[post.id] || ""}
-              onChange={(e) => setNewComment((p) => ({ ...p, [post.id]: e.target.value }))}
-            />
-            <button className="comment-send" onClick={() => addComment(post.id)}>Send</button>
+            <input value={newComment[post.id] || ""} onChange={e => setNewComment(p => ({ ...p, [post.id]: e.target.value }))} />
+            <button onClick={() => addComment(post.id)}>Send</button>
           </div>
 
-          {comments[post.id]?.map((c, i) => (
-            <p key={i} className="comment-text">💬 {c.text}</p>
-          ))}
+          {comments[post.id]?.map((c, i) => <p key={i}>💬 {c.text}</p>)}
         </div>
       ))}
     </div>
