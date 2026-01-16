@@ -1,0 +1,338 @@
+/* ================= GLOBAL RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", "Poppins", sans-serif;
+}
+
+body {
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+/* ================= NAVBAR ================= */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-left,
+.nav-center,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ================= LOGO ================= */
+.logo {
+  font-size: 34px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #5f87d7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  cursor: pointer;
+
+  animation: logoFloat 3s ease-in-out infinite;
+  transition: transform 0.35s ease, text-shadow 0.35s ease;
+}
+
+.logo:hover {
+  transform: scale(1.15) rotate(-1deg);
+  text-shadow: 0 0 22px rgba(79, 70, 229, 0.6);
+}
+
+/* Floating animation */
+@keyframes logoFloat {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+/* ================= NAV LINKS ================= */
+.nav-link {
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.nav-link:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* ================= LOGOUT BUTTON ================= */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+  transform: scale(1.08);
+}
+
+/* ===== CREATE POST FORM GAP ===== */
+.crePost {
+  margin-top: 10px;   /* 👈 one clean line gap */
+}
+
+/* ================= CENTERED CONTAINER ================= */
+.container {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* ================= CARD ================= */
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 26px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  animation: fadeIn 0.5s ease;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+}
+
+/* ================= CARD TITLE ================= */
+.card h2 {
+  text-align: center;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+/* ================= INPUTS ================= */
+input,
+textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  transition: border 0.25s ease, box-shadow 0.25s ease;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79,70,229,0.2);
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* File input */
+input[type="file"] {
+  padding: 8px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+/* ================= BUTTONS ================= */
+button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+button:hover {
+  background: #6366f1;
+  transform: scale(1.05);
+}
+
+button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ================= POSTS ================= */
+.posts-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.post-card {
+  width: 100%;
+  max-width: 750px;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+
+  animation: fadeIn 0.4s ease;
+}
+
+.post-card h3 {
+  margin-bottom: 6px;
+}
+
+.post-card p {
+  margin: 10px 0;
+}
+
+.post-card small {
+  color: #6b7280;
+}
+
+/* File / image */
+.post-card img {
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.post-card a {
+  display: inline-block;
+  margin-top: 10px;
+  color: #4f46e5;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.post-card a:hover {
+  text-decoration: underline;
+}
+
+/* ================= FILTER BAR ================= */
+.filter-bar {
+  width: 100%;
+  max-width: 750px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.filter-bar input {
+  flex: 1;
+}
+
+.filter-bar button {
+  min-width: 90px;
+}
+
+/* ================= COMMENTS ================= */
+.comment-box {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.comment {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #e5e7eb;
+  font-size: 14px;
+  color: #374151;
+  animation: slideUp 0.3s ease;
+}
+
+  .nav-center {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+ 
+  .post-card {
+    padding: 16px;
+  }
+
+
+.filter-select, .filter-input {
+
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            font-size:small;
+            transition: all 0.25s ease;
+          }
+
+          .filter-select:hover, .filter-input:hover {
+            border-color: #4f46e5;
+            background: #f3f4ff;
+          }
+
+          .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 8px rgba(79,70,229,0.25);
+          }
+
+          .delete-btn {
+            background: #ef4444;
+            color: white;
+            margin-left: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            transition: 0.25s;
+          }
+
+          .delete-btn:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+  }
+
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+}
