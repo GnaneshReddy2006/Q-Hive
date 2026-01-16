@@ -193,8 +193,8 @@ function Profile() {
           onChange={e => setYear(e.target.value)}
         />
 
-        {/* PROFILE PIC UPLOAD */}
-        <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+       {/* PROFILE PIC UPLOAD
+        <input  type="file" placeholder="PROFILE PIC" onChange={(e) => setFile(e.target.files[0])} /> <h6> choose file for profile Pic</h6> */}
 
         <button onClick={handleUpdate} disabled={loading}>
           {loading ? "Updating..." : "Update Profile"}
