@@ -23,7 +23,7 @@ function Signup() {
     email = email.toLowerCase();
 
     // Accept uppercase/lowercase using "i"
-    const emailPattern = /^[0-9]{3}g[0-9]a[0-9]{4,5}@srit\.ac\.in$/i;
+    const emailPattern = /^[0-9]{3}g[0-9]a[a-z0-9]{4,5}@srit\.ac\.in$/i;
 
     if (!emailPattern.test(email)) {
       toast.error("Only SRIT college email allowed");
