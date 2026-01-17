@@ -9,18 +9,21 @@ function Signup() {
 
   const handleSignup = async () => {
     const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
+    let email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
     const year = document.getElementById("year").value.trim();
     const branch = document.getElementById("branch").value.trim();
 
-    // Manual required logic
     if (!name || !email || !password || !year || !branch) {
       toast.error("All fields are required");
       return;
     }
 
-    const emailPattern = /^[0-9]{3}g[0-9]a[0-9]{4,5}@srit\.ac\.in$/;
+    // Convert email to lowercase before validation
+    email = email.toLowerCase();
+
+    // Accept uppercase/lowercase using "i"
+    const emailPattern = /^[0-9]{3}g[0-9]a[0-9]{4,5}@srit\.ac\.in$/i;
 
     if (!emailPattern.test(email)) {
       toast.error("Only SRIT college email allowed");
@@ -31,7 +34,7 @@ function Signup() {
       const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
       await setDoc(doc(db, "users", userCred.user.uid), {
-        email,
+        email: email, // always lowercase
         name,
         year: Number(year),
         branch,
@@ -42,7 +45,7 @@ function Signup() {
       navigate("/create");
 
     } catch (error) {
-      toast.error("mail already in use");
+      toast.error("Mail already in use");
     }
   };
 
