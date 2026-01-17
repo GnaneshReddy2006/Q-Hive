@@ -24,7 +24,6 @@ function DeleteAccount() {
     if (!window.confirm("⚠️ This will permanently delete your account.")) return;
 
     try {
-      // 🔐 Re-authenticate
       const password = prompt("Enter your password to confirm:");
       if (!password) return;
 
@@ -33,7 +32,6 @@ function DeleteAccount() {
 
       const userId = user.uid;
 
-      // 🧹 DELETE FIRESTORE DATA FIRST
       const collections = ["posts", "comments", "likes"];
       for (const col of collections) {
         const snap = await getDocs(
@@ -46,7 +44,6 @@ function DeleteAccount() {
 
       await deleteDoc(doc(db, "users", userId));
 
-      // 🔥 DELETE AUTH LAST
       await deleteUser(user);
 
       toast.success("Account deleted successfully");
