@@ -8,7 +8,7 @@ import {
   doc,
   getDoc,
   updateDoc,
-  addDoc              // ✅ FIX: Missing import added
+  addDoc
 } from "firebase/firestore";
 
 import { useEffect, useState, useCallback } from "react";
@@ -49,32 +49,6 @@ function Posts() {
     }
   };
 
-  /* LIKE SYSTEM */
-  const toggleLike = async (postId, currentLikes = []) => {
-    if (!user) return toast.error("Login required");
-
-    const postRef = doc(db, "posts", postId);
-    const userId = user.uid;
-
-    const hasLiked = currentLikes.includes(userId);
-    const updatedLikes = hasLiked
-      ? currentLikes.filter((id) => id !== userId)
-      : [...currentLikes, userId];
-
-    await updateDoc(postRef, { likes: updatedLikes });
-
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId ? { ...post, likes: updatedLikes } : post
-      )
-    );
-    setFilteredPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId ? { ...post, likes: updatedLikes } : post
-      )
-    );
-  };
-
   /* COMMENTS */
   const fetchComments = async (postId) => {
     const snap = await getDocs(
@@ -109,8 +83,6 @@ function Posts() {
     for (const d of snap.docs) {
       const post = { id: d.id, ...d.data() };
 
-      if (!Array.isArray(post.likes)) post.likes = [];
-
       if (post.userId) {
         const uSnap = await getDoc(doc(db, "users", post.userId));
         const u = uSnap.exists() ? uSnap.data() : {};
@@ -122,6 +94,7 @@ function Posts() {
       fetchComments(post.id);
     }
 
+    // Sort newest first
     list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
     setPosts(list);
@@ -246,19 +219,14 @@ function Posts() {
             </>
           )}
 
-          {/* OTHER FILES */}
+          {/* OTHER FILE TYPES */}
           {!post.fileType?.startsWith("image") &&
             !post.fileType?.startsWith("video") &&
             post.fileType !== "application/pdf" &&
             post.fileType !== "text/plain" &&
             post.fileUrl && <a href={post.fileUrl} download>⬇️ Download File</a>}
 
-          {/* LIKE */}
-          <button className="like-button" onClick={() => toggleLike(post.id, post.likes)}>
-            ❤️ {post.likes?.length || 0}
-          </button>
-
-          {/* DELETE BY OWNER */}
+          {/* DELETE ONLY BY OWNER */}
           {user?.uid === post.userId && (
             <button className="delete-btn" onClick={() => deletePost(post.id, post.fileUrl)}>
               Delete
