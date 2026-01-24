@@ -2,20 +2,10 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentSingleTabManager
-} from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-/**
- * Firebase configuration
- * ⚠️ Uses environment variables (REACT_APP_*)
- * Works for:
- * - Local development
- * - Vercel production
- */
+// Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -25,18 +15,14 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-// Initialize Firebase App
+// Initialize Firebase app
 const app = initializeApp(firebaseConfig);
 
-// Firebase Authentication
+// Auth
 export const auth = getAuth(app);
 
-// Firestore with offline persistence (single tab)
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentSingleTabManager()
-  })
-});
+// Firestore (NO persistence – stable on all mobile browsers)
+export const db = getFirestore(app);
 
-// Firebase Storage
+// Storage
 export const storage = getStorage(app);
