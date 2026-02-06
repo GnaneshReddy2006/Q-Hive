@@ -6,7 +6,8 @@ import { auth } from "./firebase";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { supabase } from "./supabaseClient"; // IMPORTANT: Ensure this import path is correct
+
+import { supabase } from "./supabase.js"; // IMPORTANT: Ensure this import path is correct
 
 import ForgotPassword from "./pages/ForgotPassword";
 import Signup from "./pages/Signup";
