@@ -31,7 +31,7 @@ function Profile() {
   const [branch, setBranch] = useState("");
   const [year, setYear] = useState("");
   const [profilePic, setProfilePic] = useState("");
-  const [file, setFile] = useState(null);
+  const [file] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [currentPass, setCurrentPass] = useState("");
