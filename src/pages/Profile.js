@@ -9,18 +9,23 @@ import {
   getAuth,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  updatePassword
+  updatePassword,
+  signOut,
+  deleteUser
 } from "firebase/auth";
 
 import { db } from "../firebase";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const CLOUD_NAME = "dbb3d75pd";
 const UPLOAD_PRESET = "posts_upload";
 
 function Profile() {
+
   const auth = getAuth();
   const user = auth.currentUser;
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [branch, setBranch] = useState("");
@@ -29,7 +34,6 @@ function Profile() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Password states
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
 
@@ -49,7 +53,7 @@ function Profile() {
           setYear(data.year || "");
           setProfilePic(data.profilePic || "");
         }
-      } catch (err) {
+      } catch {
         toast.error("Failed to load profile ❌");
       }
     };
@@ -59,12 +63,14 @@ function Profile() {
 
   /* ================= UPDATE PROFILE ================= */
   const handleUpdate = async () => {
+
     if (!user) return toast.error("You must be logged in");
 
     setLoading(true);
     const toastId = toast.loading("Updating profile...");
 
     try {
+
       let imageUrl = profilePic;
 
       if (file) {
@@ -95,7 +101,8 @@ function Profile() {
         autoClose: 2500
       });
 
-    } catch (err) {
+    } catch {
+
       toast.update(toastId, {
         render: "Profile update failed ❌",
         type: "error",
@@ -107,121 +114,80 @@ function Profile() {
     setLoading(false);
   };
 
-  /* ================= DELETE PROFILE PIC ================= */
-  const handleDeletePic = async () => {
-    if (!user) return toast.error("Login required");
-
-    const toastId = toast.loading("Removing profile picture...");
-    setLoading(true);
-
-    try {
-      await updateDoc(doc(db, "users", user.uid), {
-        profilePic: ""
-      });
-
-      setProfilePic("");
-      setFile(null);
-
-      toast.update(toastId, {
-        render: "Profile picture removed ❌",
-        type: "success",
-        isLoading: false,
-        autoClose: 2500
-      });
-
-    } catch (err) {
-      toast.update(toastId, {
-        render: "Failed to remove picture ❌",
-        type: "error",
-        isLoading: false,
-        autoClose: 3000
-      });
-    }
-
-    setLoading(false);
+  /* ================= LOGOUT ================= */
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
   };
 
-  /* ================= UPDATE PASSWORD ================= */
-  const updatePasswordHandler = async () => {
-    if (!currentPass.trim() || !newPass.trim())
-      return toast.error("Enter both password fields");
+  /* ================= DELETE ACCOUNT ================= */
+  const handleDeleteAccount = async () => {
 
-    if (!user) return toast.error("Login required");
-
-    const toastId = toast.loading("Updating password...");
-    setLoading(true);
+    if (!currentPass.trim())
+      return toast.error("Enter current password");
 
     try {
+
       const credential = EmailAuthProvider.credential(
         user.email,
         currentPass
       );
 
       await reauthenticateWithCredential(user, credential);
+      await deleteUser(user);
 
+      toast.success("Account deleted successfully ❌");
+      navigate("/signup");
+
+    } catch {
+      toast.error("Failed to delete account");
+    }
+  };
+
+  /* ================= UPDATE PASSWORD ================= */
+  const updatePasswordHandler = async () => {
+
+    if (!currentPass || !newPass)
+      return toast.error("Enter both password fields");
+
+    try {
+
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        currentPass
+      );
+
+      await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPass);
 
-      toast.update(toastId, {
-        render: "Password updated successfully 🔐",
-        type: "success",
-        isLoading: false,
-        autoClose: 2500
-      });
+      toast.success("Password updated 🔐");
 
       setCurrentPass("");
       setNewPass("");
 
-    } catch (err) {
-      toast.update(toastId, {
-        render: "Incorrect current password ❌",
-        type: "error",
-        isLoading: false,
-        autoClose: 3500
-      });
+    } catch {
+      toast.error("Incorrect current password ❌");
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="container">
+
       <div className="card">
+
         <h2>My Profile</h2>
 
-        {profilePic && (
-          <>
-            <img
-              src={profilePic}
-              alt="profile"
-              style={{
-                width: "120px",
-                height: "120px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                margin: "0 auto 20px",
-                display: "block"
-              }}
-            />
+        <button onClick={handleLogout}>
+          Logout
+        </button>
 
-            <button
-              onClick={handleDeletePic}
-              style={{
-                background: "red",
-                color: "white",
-                padding: "8px 15px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-                marginBottom: "20px",
-                display: "block",
-                marginLeft: "auto",
-                marginRight: "auto"
-              }}
-            >
-              Delete Profile Picture
-            </button>
-          </>
-        )}
+        <button
+          style={{ background: "red", color: "white" }}
+          onClick={handleDeleteAccount}
+        >
+          Delete Account
+        </button>
+
 
         <input
           className="input"
@@ -245,18 +211,12 @@ function Profile() {
           onChange={e => setYear(e.target.value)}
         />
 
-        <input
-          type="file"
-          placeholder="PROFILE PIC"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
-        <h6>Choose file for profile Pic</h6>
-
+      
         <button onClick={handleUpdate} disabled={loading}>
-          {loading ? "Updating..." : "Update Profile"}
+          Update Profile
         </button>
 
-        <h3 style={{ marginTop: "30px" }}>Change Password</h3>
+        <h3>Change Password</h3>
 
         <input
           className="input"
@@ -274,10 +234,13 @@ function Profile() {
           onChange={(e) => setNewPass(e.target.value)}
         />
 
-        <button onClick={updatePasswordHandler} disabled={loading}>
-          {loading ? "Updating..." : "Update Password"}
+        <button onClick={updatePasswordHandler}>
+          Update Password
         </button>
 
+        <hr />
+
+        
       </div>
     </div>
   );
